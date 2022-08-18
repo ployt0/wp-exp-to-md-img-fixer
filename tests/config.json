@@ -1,0 +1,7 @@
+{
+  "old_domain": "http://a/b/c",
+  "new_domain": "images/",
+  "markdown_source_dir": "app/pages",
+  "destination_subdir": "relinked_pages",
+  "verbosity": 0
+}
