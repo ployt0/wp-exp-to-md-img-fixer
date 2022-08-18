@@ -58,5 +58,5 @@ jobs:
         git clone https://github.com/lonekorean/wordpress-export-to-markdown.git
         cd wordpress-export-to-markdown
         # Todo, this requires export.xml from somebodies wordpress site.
-        docker run --name nodev -ti --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp node:18.7.0-alpine3.15 sh -c "../tests/provision.sh"
+        docker run --name nodev --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp node:18.7.0-alpine3.15 sh -c "../tests/provision.sh"
 
