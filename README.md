@@ -6,9 +6,9 @@ I have problems with it scraping all my images from posts. The posts still conta
 
 I need somebody to donate their site's export.xml. I'll get round to it later but I wrote this project on a borrowed laptop and I don't have access right now.
 
-Integration tests can use an alpine and node.js on the export.xml. Like lonekorean's repo, a gif video would suffice if this is a hassle.
+Integration tests use an alpine and node.js docker image (and the still missing export.xml).
 
-Please see the unit tests for how it works.
+Please see the unit tests for more details.
 
 # Usage
 
@@ -16,11 +16,16 @@ Please see the unit tests for how it works.
 python wp-exp-to-md-img-fixer/converted_md_corrector.py -m tests/si-tests/pages https://yoursite.co.uk/wp-content/uploads
 ```
 
-Video goes here.
 
-I've provided some sample pages using images on ibb. I hope GitHub can run it for me, but if not:
+https://user-images.githubusercontent.com/25666053/185378298-fd175dc9-383a-4457-b90c-b911d212808b.mp4
+
+
+
+I've provided some sample pages using images on ibb. GitHub can run it for me:
 
 ```shell
 python wp-exp-to-md-img-fixer/converted_md_corrector.py -m tests/si-tests/pages https://i.ibb.co
 ```
+
+Still working on showing what that proves, the video above is a better demo.
 
