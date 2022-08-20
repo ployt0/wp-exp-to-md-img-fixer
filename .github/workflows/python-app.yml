@@ -53,6 +53,56 @@ jobs:
       run: |
         python wp-exp-to-md-img-fixer/converted_md_corrector.py -v -m tests/si-tests/pages https://i.ibb.co
 
+
+    - name: Spin up DB container
+      run: |
+        docker run --name mariadb -e MYSQL_ROOT_PASSWORD=mypass -p 3306:3306 -d --restart unless-stopped mariadb:10.8.3-jammy
+
+    - name: Spin up WordPress container
+      run: |
+        # Query, can we expose on 0? Or localhost only?
+        docker run -p 80:80 -p 443:443 -p 127.0.0.1:8066:22 --name mywp -d --restart unless-stopped wordpress:6.0.1
+        mariadb_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mariadb)
+        sed -i "s/172.17.0.3/$mariadb_addy/" wp-config.php
+        docker cp wp-config.php mywp:/var/www/html/wp-config.php
+        docker cp ssl-params.conf mywp:/etc/apache2/conf-available/ssl-params.conf
+        docker cp wordpress.conf mywp:/etc/apache2/sites-available/wordpress.conf
+        docker exec -i mywp bash < wp_provisioning.sh
+        docker restart mywp
+        docker exec -i mywp /etc/init.d/ssh start
+
+    - name: Await return of mariadb container
+      run: |
+        while ! docker exec mariadb mysql -uroot -pmypass -e "SELECT 1" >/dev/null 2>&1; do
+            echo sleeping.
+            docker ps  # Read headlines.
+            sleep 1
+        done
+
+    - name: Grab TLS cert from WordPress
+      run: |
+        echo quit | openssl s_client -showcerts -servername "localhost" -connect localhost:443 > self-signed-cacert.crt
+
+    - name: Use WP's IP for DB user
+      run: |
+        wp_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mywp)
+        echo "wp_addy = $wp_addy"
+        sed -i "s/wpdockerip/$wp_addy/" wpdbsetup.sql
+        cp tests/config_template.json tests/config.json
+        sed -i "s/localhost:8066/$wp_addy/" tests/config.json
+        cat tests/config.json
+        docker ps
+
+    - name: Grab WP's self-signed cert
+      run: |
+        echo quit | openssl s_client -showcerts -servername "localhost" -connect localhost:443 > self-signed-cacert.crt
+
+    - name: Inject SQL scripts to MySQL
+      run: |
+        docker exec -i mariadb mysql -uroot -pmypass < wpdbsetup.sql
+        docker exec -i mariadb mysql -uroot -pmypass wordpress < full_db_220820.sql
+
+
     - name: Real world use where shrunken images were returned.
       run: |
         python wp-exp-to-md-img-fixer/converted_md_corrector.py -v -m tests/si-tests/output-missing-webps https://172.17.0.1:8541
