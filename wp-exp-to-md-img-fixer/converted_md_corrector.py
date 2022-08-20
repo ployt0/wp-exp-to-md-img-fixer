@@ -141,7 +141,7 @@ def check_if_scaled_and_dl(img_url: str, dest_imgs_dir: str, keep_resizes) ->\
             pass
         else:
             print(f"{COLOUR_YEL}Full sized version of downscaled "
-                  f"{potential_dims} was saved to {output_fs_path}."
+                  f"{potential_dims[0]} x {potential_dims[0]} was scraped."
                   f"{COLOUR_STOP}")
             if not keep_resizes:
                 return full_img_name

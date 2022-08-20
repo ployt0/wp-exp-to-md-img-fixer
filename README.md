@@ -46,20 +46,22 @@ python wp-exp-to-md-img-fixer/converted_md_corrector.py -m tests/si-tests/pages 
 https://user-images.githubusercontent.com/25666053/185379174-e0daa3d4-0cfd-4f05-a27c-f3389b45a35c.mp4
 
 
-I've provided some sample pages using images on ibb. GitHub can run it for me:
+I've provided some sample page(s) using images on ibb. GitHub can run it for me:
 
 ```shell
 python wp-exp-to-md-img-fixer/converted_md_corrector.py -m tests/si-tests/pages https://i.ibb.co
 ```
 
-Still working on showing what that proves, the video above is a better demo.
+You'll see this fills the `tests/si-tests/relinked_pages/images` directory.
 
-I have another demo in si-tests/output-links-fixed. All the links were transformed successfully by the node.js script. Because I added webp support to it. It *does* however demonstrate how scaled down images were sometimes provided. This is a WordPress issue, but we can still do something about it, which we do, here. I already copied the full sized images across too. The demo should show that the markdown is updated to use them, if there can be any doubts about the unit tests showing this.
+I have another demo in si-tests/output-missing-webps. It demonstrates how scaled down images were sometimes provided. I already copied the full sized images across to the test server. The demo shows that the markdown is updated to use them, if there can be any doubts about the unit tests showing this. The demo uses an actual WordPress server, when all that is needed is a web server with those images.
 
-I have provided my exported xml. It is configured:
+## Photo credits
 
-Username: testrunner
-Password: HBX_fsHwXRkj2
-dontcare@dontemail.com
+<a href="https://unsplash.com/@esaiastann?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Esaias Tan</a>
 
-Obviously the image server isn't available anymore, but could be regenerated in the cloud if lonekorean doesn't merge my PR first.
+<a href="https://unsplash.com/@markusspiske?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Markus Spiske</a>
+    
+<a href="https://unsplash.com/@koshiera?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Sergey Kvint</a>
+
+And more who I can't trace.
