@@ -53,12 +53,7 @@ jobs:
       run: |
         python wp-exp-to-md-img-fixer/converted_md_corrector.py -v -m tests/si-tests/pages https://i.ibb.co
 
-    - name: Run End to End, inside a Nodejs container
+    - name: Real world use where shrunken images were returned.
       run: |
-        git clone https://github.com/lonekorean/wordpress-export-to-markdown.git
-        cd wordpress-export-to-markdown
-        chmod +x ../tests/provision.sh
-        cp ../tests/provision.sh .
-        # Todo, this requires export.xml from somebodies wordpress site.
-        docker run --name nodev --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp node:18.7.0-alpine3.15 sh -c "./provision.sh"
+        python wp-exp-to-md-img-fixer/converted_md_corrector.py -v -m tests/si-tests/output-missing-webps https://172.17.0.1:8541
 

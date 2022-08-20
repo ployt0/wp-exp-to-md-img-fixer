@@ -1,0 +1,109 @@
+diff --git a/src/parser.js b/src/parser.js
+index 1451485..a5b63b5 100644
+--- a/src/parser.js
++++ b/src/parser.js
+@@ -143,7 +143,7 @@ function processCategoryTags(post, domain) {
+ function collectAttachedImages(data) {
+ 	const images = getItemsOfType(data, 'attachment')
+ 		// filter to certain image file types
+-		.filter(attachment => (/\.(gif|jpe?g|png)$/i).test(attachment.attachment_url[0]))
++		.filter(attachment => (/\.(gif|jpe?g|png|webp)$/i).test(attachment.attachment_url[0]))
+ 		.map(attachment => ({
+ 			id: attachment.post_id[0],
+ 			postId: attachment.post_parent[0],
+@@ -162,7 +162,7 @@ function collectScrapedImages(data, postTypes) {
+ 			const postContent = post.encoded[0];
+ 			const postLink = post.link[0];
+ 
+-			const matches = [...postContent.matchAll(/<img[^>]*src="(.+?\.(?:gif|jpe?g|png))"[^>]*>/gi)];
++			const matches = [...postContent.matchAll(/<img[^>]*src="(.+?\.(?:gif|jpe?g|png|webp))"[^>]*>/gi)];
+ 			matches.forEach(match => {
+ 				// base the matched image URL relative to the post URL
+ 				const url = new URL(match[1], postLink).href;
+diff --git a/src/translator.js b/src/translator.js
+index 41c110b..32ef9af 100644
+--- a/src/translator.js
++++ b/src/translator.js
+@@ -67,7 +67,7 @@ function getPostContent(post, turndownService, config) {
+ 	if (config.saveScrapedImages) {
+ 		// writeImageFile() will save all content images to a relative /images
+ 		// folder so update references in post content to match
+-		content = content.replace(/(<img[^>]*src=").*?([^/"]+\.(?:gif|jpe?g|png))("[^>]*>)/gi, '$1images/$2$3');
++		content = content.replace(/(<img[^>]*src=").*?([^/"]+\.(?:gif|jpe?g|png|webp))("[^>]*>)/gi, '$1images/$2$3');
+ 	}
+ 
+ 	// this is a hack to make <iframe> nodes non-empty by inserting a "." which
+diff --git a/src/wizard.js b/src/wizard.js
+index 5285b8d..88a722d 100644
+--- a/src/wizard.js
++++ b/src/wizard.js
+@@ -74,6 +74,12 @@ const options = [
+ 		type: 'boolean',
+ 		description: 'Include custom post types and pages',
+ 		default: false
++	},
++	{
++		name: 'disable-strict-ssl',
++		type: 'boolean',
++		description: 'Strict SSL prevents image retrieval from self-signed servers',
++		default: false
+ 	}
+ ];
+ 
+diff --git a/src/writer.js b/src/writer.js
+index 7b04f78..d512fcb 100644
+--- a/src/writer.js
++++ b/src/writer.js
+@@ -16,7 +16,7 @@ async function processPayloadsPromise(payloads, loadFunc) {
+ 	const promises = payloads.map(payload => new Promise((resolve, reject) => {
+ 		setTimeout(async () => {
+ 			try {
+-				const data = await loadFunc(payload.item);
++				const data = await loadFunc(payload.item, payload.strictSSL);
+ 				await writeFile(payload.destinationPath, data);
+ 				console.log(chalk.green('[OK]') + ' ' + payload.name);
+ 				resolve();
+@@ -55,6 +55,7 @@ async function writeMarkdownFilesPromise(posts, config ) {
+ 			const payload = {
+ 				item: post,
+ 				name: (config.includeOtherTypes ? post.meta.type + ' - ' : '') + post.meta.slug,
++				strictSSL: !config.disableStrictSsl,
+ 				destinationPath,
+ 				delay
+ 			};
+@@ -72,7 +73,7 @@ async function writeMarkdownFilesPromise(posts, config ) {
+ 	}
+ }
+ 
+-async function loadMarkdownFilePromise(post) {
++async function loadMarkdownFilePromise(post, strictSSL) {
+ 	let output = '---\n';
+ 
+ 	Object.entries(post.frontmatter).forEach(([key, value]) => {
+@@ -115,6 +116,7 @@ async function writeImageFilesPromise(posts, config) {
+ 				const payload = {
+ 					item: imageUrl,
+ 					name: filename,
++					strictSSL: !config.disableStrictSsl,
+ 					destinationPath,
+ 					delay
+ 				};
+@@ -133,7 +135,7 @@ async function writeImageFilesPromise(posts, config) {
+ 	}
+ }
+ 
+-async function loadImageFilePromise(imageUrl) {
++async function loadImageFilePromise(imageUrl, strictSSL) {
+ 	// only encode the URL if it doesn't already have encoded characters
+ 	const url = (/%[\da-f]{2}/i).test(imageUrl) ? imageUrl : encodeURI(imageUrl);
+ 
+@@ -144,7 +146,8 @@ async function loadImageFilePromise(imageUrl) {
+ 			encoding: null, // preserves binary encoding
+ 			headers: {
+ 				'User-Agent': 'wordpress-export-to-markdown'
+-			}
++			},
++			strictSSL: strictSSL
+ 		});
+ 	} catch (ex) {
+ 		if (ex.name === 'StatusCodeError') {
