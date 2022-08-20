@@ -133,14 +133,16 @@ def check_if_scaled_and_dl(img_url: str, dest_imgs_dir: str, keep_resizes) ->\
     if len(potential_dims) == 2 and all(x.isdigit() for x in potential_dims):
         full_img_url = "-".join(img_url.split("-")[:-1]) + "." + img_url.split(".")[-1]
         full_img_name = full_img_url.split("/")[-1]
+        output_fs_path = os.path.join(dest_imgs_dir, full_img_name)
         try:
             urllib.request.urlretrieve(
-                full_img_url, os.path.join(dest_imgs_dir, full_img_name))
+                full_img_url, output_fs_path)
         except urllib.error.HTTPError as http404:
             pass
         else:
-            print("{}Full sized version of downscaled {} x {} was scraped.{}".format(
-                COLOUR_YEL, potential_dims[0], potential_dims[1], COLOUR_STOP))
+            print(f"{COLOUR_YEL}Full sized version of downscaled "
+                  f"{potential_dims} was saved to {output_fs_path}."
+                  f"{COLOUR_STOP}")
             if not keep_resizes:
                 return full_img_name
     urllib.request.urlretrieve(
