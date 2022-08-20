@@ -116,7 +116,7 @@ jobs:
         python wp-exp-to-md-img-fixer/converted_md_corrector.py -v -s -n $new_domain -m tests/si-tests/output-missing-webps https://$wp_addy
 
         ! grep -F "[black tower](https://$wp_addy/wp-content/uploads/2022/08/esaias-tan-eoTvBsJBH44-unsplash-678x1024.webp" tests/si-tests/output-missing-webps/test-post-8.md
-        grep -F "[black tower]($new_domain/esaias-tan-eoTvBsJBH44-unsplash.webp" tests/si-tests/output-missing-webps/test-post-8.md
+        grep -F "[black tower]($new_domain/esaias-tan-eoTvBsJBH44-unsplash-678x1024.webp" tests/si-tests/output-missing-webps/test-post-8.md
         ! grep -F "[security](https://172.17.0.3/wp-content/uploads/2022/08/sergey-kvint-4RO6xxyJqWo-unsplash.webp)" tests/si-tests/output-missing-webps/test-post-8.md
         grep -F "[security]($new_domain/sergey-kvint-4RO6xxyJqWo-unsplash.webp)" tests/si-tests/output-missing-webps/test-post-8.md
         ! grep -F "[german sub](https://$wp_addy/wp-content/uploads/2022/08/markus-spiske-FBDtFnQZSNM-unsplash-1024x679.webp)" tests/si-tests/output-missing-webps/test-post-7.md
