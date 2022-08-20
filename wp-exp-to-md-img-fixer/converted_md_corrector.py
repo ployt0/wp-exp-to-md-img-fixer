@@ -193,6 +193,8 @@ def main(args_list):
 
             with open(os.path.join(dest_pages_dir, md_file.name), "w", encoding="utf-8") as f:
                 f.write(modded_text)
+            if a.verbosity > 1:
+                print(f"Saved modified {md_file.name} to {os.path.join(dest_pages_dir, md_file.name)}")
 
 
 
