@@ -83,13 +83,15 @@ jobs:
       run: |
         echo quit | openssl s_client -showcerts -servername "localhost" -connect localhost:443 > self-signed-cacert.crt
 
-    - name: Use WP's IP, for DB user, and source of markdown
+    - name: Use WP's IP, for DB user
       run: |
         wp_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mywp)
         echo "wp_addy = $wp_addy"
+        echo "::set-env name=wp_addy::$wp_addy"
         sed -i "s/wpdockerip/$wp_addy/" wpdbsetup.sql
-        sed -i "s/localhost:8541/$wp_addy/" full_db_220820.sql
 
+        # Update dumped SQL to make current WordPress responsible for hosting all images
+        sed -i "s/localhost:8541/$wp_addy/" full_db_220820.sql
         find tests/si-tests/output-missing-webps/ -type f -name "*.md" | xargs sed -i "s/172.17.0.1:8541/$wp_addy/"
         docker cp tests/si-tests/output-missing-webps/images/. mywp:/var/www/html/wp-content/uploads/2022/08/
         docker exec -i mywp ls -la /var/www/html/wp-content/uploads/2022/08/
@@ -107,5 +109,5 @@ jobs:
 
     - name: Real world use where shrunken images were returned.
       run: |
-        python wp-exp-to-md-img-fixer/converted_md_corrector.py -v -m tests/si-tests/output-missing-webps https://172.17.0.1:8541
+        python wp-exp-to-md-img-fixer/converted_md_corrector.py -v -m tests/si-tests/output-missing-webps https://$wp_addy
 
