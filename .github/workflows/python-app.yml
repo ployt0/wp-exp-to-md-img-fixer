@@ -39,15 +39,15 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Test with pytest for coverage
-      run: |
-        cd tests
-        PYTHONPATH=../wp-exp-to-md-img-fixer coverage run --source="../wp-exp-to-md-img-fixer" -m pytest
-
-    - name: Test coverage
-      run: |
-        cd tests
-        PYTHONPATH=../wp-exp-to-md-img-fixer coverage report -m --fail-under=95
+#    - name: Test with pytest for coverage
+#      run: |
+#        cd tests
+#        PYTHONPATH=../wp-exp-to-md-img-fixer coverage run --source="../wp-exp-to-md-img-fixer" -m pytest
+#
+#    - name: Test coverage
+#      run: |
+#        cd tests
+#        PYTHONPATH=../wp-exp-to-md-img-fixer coverage report -m --fail-under=95
 
     - name: Real world use of public image server (until I bother to spin one up here)
       run: |
