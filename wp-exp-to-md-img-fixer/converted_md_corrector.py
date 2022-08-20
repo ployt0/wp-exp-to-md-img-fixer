@@ -68,11 +68,15 @@ def remove_trailing_slash(former_path):
 def parse_args(args_list):
     parser = argparse.ArgumentParser(
         description="Convert image links, in markdown, from an old domain to \"images/\".")
-    parser.add_argument("old_domain", help="the path, or domain (including http(s)://),"
-            " that image links should be converted from")
+    parser.add_argument(
+        "old_domain",
+        help="the path, or domain (including http(s)://), that image links "
+             "should be converted from. If http, then /wp-content/uploads will"
+             "be injected if not already.")
     parser.add_argument(
         "-n", "--new_domain", default="images/",
-        help="This will replace the old domain in image links.")
+        help="This will replace the old domain in image links. Should end in a "
+             "slash, probably.")
     parser.add_argument(
         "-m", "--markdown_source_dir", default="app/pages",
         help="the source directory containing the markdown files for conversion.")
