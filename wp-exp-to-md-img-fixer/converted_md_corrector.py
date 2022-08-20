@@ -120,7 +120,7 @@ def check_if_scaled_and_dl(img_url, dest_imgs_dir: str, keep_resizes):
     if img_url.startswith("https://172.") or img_url.startswith(
             "https://192.168.") or img_url.startswith("https://127.") or \
         img_url.startswith("https://localhost"):
-        ctx.load_verify_locations("self-signed-cacert.crt")
+        ssl._create_default_https_context = ssl._create_unverified_context
     img_name = img_url.split("/")[-1]
     potential_dims = pathlib.Path(img_name).stem.split("-")[-1].split("x")
     if len(potential_dims) == 2 and all(x.isdigit() for x in potential_dims):
@@ -128,8 +128,7 @@ def check_if_scaled_and_dl(img_url, dest_imgs_dir: str, keep_resizes):
         full_img_name = full_img_url.split("/")[-1]
         try:
             urllib.request.urlretrieve(
-                full_img_url, os.path.join(dest_imgs_dir, full_img_name),
-                context=ctx)
+                full_img_url, os.path.join(dest_imgs_dir, full_img_name))
         except urllib.error.HTTPError as http404:
             pass
         else:
