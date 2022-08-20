@@ -187,7 +187,7 @@ def main(args_list):
                 full_img_name = check_if_scaled_and_dl(
                     img_link_finder.get_hyperlink(), dest_imgs_dir, True)
                 # todo replace old img_name with full_img_name if not None
-                # or make that an option.
+                # or better yet, make it an option.
                 if a.verbosity > 0:
                     print("After SUB".center(OUTPUT_COLS, "-"))
                     img_link_finder.print_img_link(modded_text, img_link_finder.i)
