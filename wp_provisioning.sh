@@ -14,6 +14,8 @@ openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -days 365 -nod
     -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
 
 chown www-data:www-data /var/www/html/wp-config.php
+mkdir -p /var/www/html/wp-content/uploads/2022/08/
+chown -R www-data:www-data /var/www/html/wp-content/
 chown root:root /etc/apache2/conf-available/ssl-params.conf
 chown root:root /etc/apache2/sites-available/wordpress.conf
 

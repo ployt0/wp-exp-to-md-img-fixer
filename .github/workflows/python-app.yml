@@ -88,7 +88,6 @@ jobs:
         wp_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mywp)
         echo "wp_addy = $wp_addy"
         sed -i "s/wpdockerip/$wp_addy/" wpdbsetup.sql
-        docker exec -i mywp ls -la /var/www/html/wp-content/uploads
         docker cp tests/si-tests/output-missing-webps/images mywp:/var/www/html/wp-content/uploads/2022/08/
         docker exec -i mywp ls -la /var/www/html/wp-content/uploads
         docker exec -i mywp cp /var/www/html/wp-content/uploads/2022/08/images/* /var/www/html/wp-content/uploads/2022/08/
