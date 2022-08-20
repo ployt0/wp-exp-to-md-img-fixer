@@ -13,6 +13,7 @@ import os
 import re
 import argparse
 import urllib.request
+from typing import Optional
 from urllib.parse import urlparse
 import json
 
@@ -113,12 +114,16 @@ def get_path_to_pages(pages_dir_path):
         "at least a subdirectory on that path.")
 
 
-def check_if_scaled_and_dl(img_url, dest_imgs_dir: str, keep_resizes):
+def check_if_scaled_and_dl(img_url: str, dest_imgs_dir: str, keep_resizes) ->\
+        Optional[str]:
     """
     Downloads the full size image even if a shrunken version was identified.
     The identifier is not updated here so we have keep_resizes as an option
     to continue to download the shrunken version additionally.
+
+    Returns the name of the full sized counterpart if it was found, else None.
     """
+    full_img_name = None
     img_name = img_url.split("/")[-1]
     potential_dims = pathlib.Path(img_name).stem.split("-")[-1].split("x")
     if len(potential_dims) == 2 and all(x.isdigit() for x in potential_dims):
@@ -130,12 +135,13 @@ def check_if_scaled_and_dl(img_url, dest_imgs_dir: str, keep_resizes):
         except urllib.error.HTTPError as http404:
             pass
         else:
-            print("{}Downscaled {} x {} was fixed!{}".format(
+            print("{}Full sized version of downscaled {} x {} was scraped.{}".format(
                 COLOUR_YEL, potential_dims[0], potential_dims[1], COLOUR_STOP))
             if not keep_resizes:
-                return
+                return full_img_name
     urllib.request.urlretrieve(
         img_url, os.path.join(dest_imgs_dir, img_name))
+    return full_img_name
 
 
 def main(args_list):
@@ -172,8 +178,10 @@ def main(args_list):
                 img_link_finder.simple_detection(md_file)
                 if img_link_finder.i == -1:
                     break
-                check_if_scaled_and_dl(
+                full_img_name = check_if_scaled_and_dl(
                     img_link_finder.get_hyperlink(), dest_imgs_dir, True)
+                # todo replace old img_name with full_img_name if not None
+                # or make that an option.
                 if a.verbosity > 0:
                     print("After SUB".center(OUTPUT_COLS, "-"))
                     img_link_finder.print_img_link(modded_text, img_link_finder.i)
