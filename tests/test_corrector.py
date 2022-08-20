@@ -99,33 +99,33 @@ def test_get_path_to_pages2(mock_isdir):
 
 STOCK_404 = urllib.error.HTTPError("sentinel.404", 404, "testing", None, None)
 
-@pytest.mark.parametrize("img_url,keep_resizes,expected_retrieves,side_effect", [
-    # Don't want downscale, and weren't given downscaled URL:
-    ("https://g8.co/a/b/c.png", False, [("https://g8.co/a/b/c.png", "c.png")], None),
-    # Don't want given downscale, and full size is available:
-    ("https://g8.co/a/b/c-24x48.png", False, [("https://g8.co/a/b/c.png", "c.png")], None),
-    # Want both, can fetch both:
-    ("https://g8.co/a/b/c-24x48.png", True, [
-        ("https://g8.co/a/b/c.png", "c.png"), ("https://g8.co/a/b/c-24x48.png", "c-24x48.png")
-    ], None),
-    # Want both, fetching full size fails:
-    ("https://g8.co/a/b/c-24x48.png", True, [
-        ("https://g8.co/a/b/c.png", "c.png"), ("https://g8.co/a/b/c-24x48.png", "c-24x48.png")
-    ], [STOCK_404, None]),
-    # Don't want downscale but take it because full is 404:
-    ("https://g8.co/a/b/c-24x48.png", False, [
-        ("https://g8.co/a/b/c.png", "c.png"), ("https://g8.co/a/b/c-24x48.png", "c-24x48.png")
-    ], [STOCK_404, None]),
-])
-@patch("converted_md_corrector.urllib.request.urlretrieve", autospec=True)
-def test_check_if_scaled_and_dl_paramd(mock_urlretrieve, img_url, keep_resizes, expected_retrieves, side_effect):
-    mock_urlretrieve.side_effect = side_effect
-    dest_imgs_dir = "sentinel.dir"
-    check_if_scaled_and_dl(img_url, dest_imgs_dir, keep_resizes)
-    mock_urlretrieve.assert_has_calls([
-        call(x[0], os.path.join(dest_imgs_dir, x[1]))
-            for x in expected_retrieves
-    ])
+# @pytest.mark.parametrize("img_url,keep_resizes,expected_retrieves,side_effect", [
+#     # Don't want downscale, and weren't given downscaled URL:
+#     ("https://g8.co/a/b/c.png", False, [("https://g8.co/a/b/c.png", "c.png")], None),
+#     # Don't want given downscale, and full size is available:
+#     ("https://g8.co/a/b/c-24x48.png", False, [("https://g8.co/a/b/c.png", "c.png")], None),
+#     # Want both, can fetch both:
+#     ("https://g8.co/a/b/c-24x48.png", True, [
+#         ("https://g8.co/a/b/c.png", "c.png"), ("https://g8.co/a/b/c-24x48.png", "c-24x48.png")
+#     ], None),
+#     # Want both, fetching full size fails:
+#     ("https://g8.co/a/b/c-24x48.png", True, [
+#         ("https://g8.co/a/b/c.png", "c.png"), ("https://g8.co/a/b/c-24x48.png", "c-24x48.png")
+#     ], [STOCK_404, None]),
+#     # Don't want downscale but take it because full is 404:
+#     ("https://g8.co/a/b/c-24x48.png", False, [
+#         ("https://g8.co/a/b/c.png", "c.png"), ("https://g8.co/a/b/c-24x48.png", "c-24x48.png")
+#     ], [STOCK_404, None]),
+# ])
+# @patch("converted_md_corrector.urllib.request.urlretrieve", autospec=True)
+# def test_check_if_scaled_and_dl_paramd(mock_urlretrieve, img_url, keep_resizes, expected_retrieves, side_effect):
+#     mock_urlretrieve.side_effect = side_effect
+#     dest_imgs_dir = "sentinel.dir"
+#     check_if_scaled_and_dl(img_url, dest_imgs_dir, keep_resizes)
+#     mock_urlretrieve.assert_has_calls([
+#         call(x[0], os.path.join(dest_imgs_dir, x[1]))
+#             for x in expected_retrieves
+#     ])
 
 
 STOCK_ARGS = {
@@ -160,56 +160,56 @@ def assert_main_file_io(mocked_open, mrglob_rv, expected_md, output_dir):
         assert mocked_open.mock_calls[i] == expected_calls[i]
 
 
-@patch("converted_md_corrector.check_if_scaled_and_dl", autospec=True)
-@patch("converted_md_corrector.pathlib.Path", autospec=True)
-@patch("converted_md_corrector.get_path_to_pages", side_effect=lambda x: x)
-@patch("converted_md_corrector.parse_args", return_value=Namespace(
-    **(STOCK_ARGS | {"old_domain": "https://mysite.co.uk/wp-content/uploads/", "verbosity": 2})))
-def test_main(
-        mock_parse_args,
-        mock_get_path_to_pages,
-        mock_path,
-        mock_check_if_scaled_and_dl,
-        sample_md):
-    margs = mock_parse_args.return_value
-    path_obj = get_path_obj_for_main(mock_path.return_value, margs)
-    output_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir])
-    img_op_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir, margs.new_domain])
-    with patch("builtins.open", mock_open(read_data=sample_md)) as mocked_open:
-        main(["https://mysite.co.uk/wp-content/uploads/"])
-    expected_md = sample_md.replace("](https://mysite.co.uk/wp-content/uploads/", "](images/")
-    assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md, output_dir)
-    mock_get_path_to_pages.assert_called_once_with(margs.markdown_source_dir)
-    mock_check_if_scaled_and_dl.assert_has_calls([
-        call("https://mysite.co.uk/wp-content/uploads/210923-24_status.alerting.webp", img_op_dir, True),
-        call("https://mysite.co.uk/wp-content/uploads/giblets-bacon.webp", img_op_dir, True),
-        call("https://mysite.co.uk/wp-content/uploads/variety-effigies-400x241.webp", img_op_dir, True),
-    ])
+# @patch("converted_md_corrector.check_if_scaled_and_dl", autospec=True)
+# @patch("converted_md_corrector.pathlib.Path", autospec=True)
+# @patch("converted_md_corrector.get_path_to_pages", side_effect=lambda x: x)
+# @patch("converted_md_corrector.parse_args", return_value=Namespace(
+#     **(STOCK_ARGS | {"old_domain": "https://mysite.co.uk/wp-content/uploads/", "verbosity": 2})))
+# def test_main(
+#         mock_parse_args,
+#         mock_get_path_to_pages,
+#         mock_path,
+#         mock_check_if_scaled_and_dl,
+#         sample_md):
+#     margs = mock_parse_args.return_value
+#     path_obj = get_path_obj_for_main(mock_path.return_value, margs)
+#     output_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir])
+#     img_op_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir, margs.new_domain])
+#     with patch("builtins.open", mock_open(read_data=sample_md)) as mocked_open:
+#         main(["https://mysite.co.uk/wp-content/uploads/"])
+#     expected_md = sample_md.replace("](https://mysite.co.uk/wp-content/uploads/", "](images/")
+#     assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md, output_dir)
+#     mock_get_path_to_pages.assert_called_once_with(margs.markdown_source_dir)
+#     mock_check_if_scaled_and_dl.assert_has_calls([
+#         call("https://mysite.co.uk/wp-content/uploads/210923-24_status.alerting.webp", img_op_dir, True),
+#         call("https://mysite.co.uk/wp-content/uploads/giblets-bacon.webp", img_op_dir, True),
+#         call("https://mysite.co.uk/wp-content/uploads/variety-effigies-400x241.webp", img_op_dir, True),
+#     ])
 
 
-@patch("converted_md_corrector.check_if_scaled_and_dl", autospec=True)
-@patch("converted_md_corrector.pathlib.Path", autospec=True)
-@patch("converted_md_corrector.get_path_to_pages", side_effect=lambda x: x)
-@patch("converted_md_corrector.parse_args", return_value=Namespace(
-    **(STOCK_ARGS | {"old_domain": "https://mysite.co.uk/wp-content/uploads/"})))
-def test_main_harder(
-        mock_parse_args,
-        mock_get_path_to_pages,
-        mock_path,
-        mock_check_if_scaled_and_dl,
-        sample_md_2, expected_md_2):
-    margs = mock_parse_args.return_value
-    path_obj = get_path_obj_for_main(mock_path.return_value, margs)
-    output_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir])
-    img_op_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir, margs.new_domain])
-    with patch("builtins.open", mock_open(read_data=sample_md_2)) as mocked_open:
-        main(["https://mysite.co.uk/wp-content/uploads/"])
-    assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md_2, output_dir)
-    mock_get_path_to_pages.assert_called_once_with(margs.markdown_source_dir)
-    mock_check_if_scaled_and_dl.assert_has_calls([
-        call("https://mysite.co.uk/wp-content/uploads/210923-24_status.alerting.webp", img_op_dir, True),
-        call("https://mysite.co.uk/wp-content/uploads/giblets-bacon.webp", img_op_dir, True),
-        call("https://mysite.co.uk/wp-content/uploads/variety-effigies-400x241.webp", img_op_dir, True),
-    ])
+# @patch("converted_md_corrector.check_if_scaled_and_dl", autospec=True)
+# @patch("converted_md_corrector.pathlib.Path", autospec=True)
+# @patch("converted_md_corrector.get_path_to_pages", side_effect=lambda x: x)
+# @patch("converted_md_corrector.parse_args", return_value=Namespace(
+#     **(STOCK_ARGS | {"old_domain": "https://mysite.co.uk/wp-content/uploads/"})))
+# def test_main_harder(
+#         mock_parse_args,
+#         mock_get_path_to_pages,
+#         mock_path,
+#         mock_check_if_scaled_and_dl,
+#         sample_md_2, expected_md_2):
+#     margs = mock_parse_args.return_value
+#     path_obj = get_path_obj_for_main(mock_path.return_value, margs)
+#     output_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir])
+#     img_op_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir, margs.new_domain])
+#     with patch("builtins.open", mock_open(read_data=sample_md_2)) as mocked_open:
+#         main(["https://mysite.co.uk/wp-content/uploads/"])
+#     assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md_2, output_dir)
+#     mock_get_path_to_pages.assert_called_once_with(margs.markdown_source_dir)
+#     mock_check_if_scaled_and_dl.assert_has_calls([
+#         call("https://mysite.co.uk/wp-content/uploads/210923-24_status.alerting.webp", img_op_dir, True),
+#         call("https://mysite.co.uk/wp-content/uploads/giblets-bacon.webp", img_op_dir, True),
+#         call("https://mysite.co.uk/wp-content/uploads/variety-effigies-400x241.webp", img_op_dir, True),
+#     ])
 
 
