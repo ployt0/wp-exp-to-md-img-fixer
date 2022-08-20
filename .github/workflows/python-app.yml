@@ -87,6 +87,7 @@ jobs:
       run: |
         wp_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mywp)
         echo "wp_addy = $wp_addy"
+        echo "wp_addy=$wp_addy" >> $GITHUB_ENV
         echo "::set-env name=wp_addy::$wp_addy"
         sed -i "s/wpdockerip/$wp_addy/" wpdbsetup.sql
 
