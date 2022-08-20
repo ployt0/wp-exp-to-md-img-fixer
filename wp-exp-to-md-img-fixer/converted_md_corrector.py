@@ -116,11 +116,6 @@ def check_if_scaled_and_dl(img_url, dest_imgs_dir: str, keep_resizes):
     The identifier is not updated here so we have keep_resizes as an option
     to continue to download the shrunken version additionally.
     """
-    ctx = ssl.create_default_context()
-    if img_url.startswith("https://172.") or img_url.startswith(
-            "https://192.168.") or img_url.startswith("https://127.") or \
-        img_url.startswith("https://localhost"):
-        ssl._create_default_https_context = ssl._create_unverified_context
     img_name = img_url.split("/")[-1]
     potential_dims = pathlib.Path(img_name).stem.split("-")[-1].split("x")
     if len(potential_dims) == 2 and all(x.isdigit() for x in potential_dims):
@@ -156,6 +151,14 @@ def main(args_list):
     pathlib.Path(dest_imgs_dir).mkdir(exist_ok=True)
     print(f"\nGrepping for \"{a.old_domain}\" in {src_pages_dir} to update in {dest_pages_dir}\n")
     img_link_finder = MDImgLinkFinder(a.old_domain)
+    # Detect local host/private network and disable secure certification.
+    if a.old_domain.startswith("https://"):
+        octets = a.old_domain[8:].split(".")
+        if a.old_domain.startswith("https://localhost") or \
+            octets[0] in ["172", "127"] or a.old_domain.startswith(
+            "https://192.168."):
+            ssl._create_default_https_context = ssl._create_unverified_context
+
     for md_file in pathlib.Path(src_pages_dir).rglob('*.md'):
         if a.verbosity > 1:
             print(f"Scanning {md_file}")
