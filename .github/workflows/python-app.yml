@@ -70,7 +70,6 @@ jobs:
         docker exec -i mywp bash < wp_provisioning.sh
         docker restart mywp
         docker exec -i mywp /etc/init.d/ssh start
-        docker exec -i mywp ls -la /var/www/html/wp-content
 
     - name: Await return of mariadb container
       run: |
@@ -89,8 +88,10 @@ jobs:
         wp_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mywp)
         echo "wp_addy = $wp_addy"
         sed -i "s/wpdockerip/$wp_addy/" wpdbsetup.sql
-        docker cp tests/si-tests/output-missing-webps/images/* mywp:/var/www/html/wp-content/2022/08/
-        docker exec -i mywp ls -la /var/www/html/wp-content
+        docker exec -i mywp ls -la /var/www/html/wp-content/uploads
+        docker cp tests/si-tests/output-missing-webps/images mywp:/var/www/html/wp-content/uploads/2022/08/
+        docker exec -i mywp ls -la /var/www/html/wp-content/uploads
+        docker exec -i mywp cp /var/www/html/wp-content/uploads/2022/08/images/* /var/www/html/wp-content/uploads/2022/08/
         docker ps
 
     - name: Grab WP's self-signed cert
