@@ -83,11 +83,14 @@ jobs:
       run: |
         echo quit | openssl s_client -showcerts -servername "localhost" -connect localhost:443 > self-signed-cacert.crt
 
-    - name: Use WP's IP for DB user
+    - name: Use WP's IP, for DB user, and source of markdown
       run: |
         wp_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mywp)
         echo "wp_addy = $wp_addy"
         sed -i "s/wpdockerip/$wp_addy/" wpdbsetup.sql
+        sed -i "s/localhost:8541/$wp_addy/" full_db_220820.sql
+
+        find tests/si-tests/output-missing-webps/ -type f -name "*.md" | xargs sed -i "s/172.17.0.1:8541/$wp_addy/"
         docker cp tests/si-tests/output-missing-webps/images/. mywp:/var/www/html/wp-content/uploads/2022/08/
         docker exec -i mywp ls -la /var/www/html/wp-content/uploads/2022/08/
         docker ps
