@@ -85,6 +85,9 @@ def parse_args(args_list):
     parser.add_argument(
         "-v", "--verbosity", action="count", default=0,
         help="increase output verbosity")
+    parser.add_argument(
+        "-s", "--insecure", action="store_true",
+        help="Do NOT verify certificates over https.")
     args = parser.parse_args(args_list)
     if args.config_json is not None:
         with open(args.config_json) as f:
@@ -135,7 +138,6 @@ def check_if_scaled_and_dl(img_url, dest_imgs_dir: str, keep_resizes):
         img_url, os.path.join(dest_imgs_dir, img_name))
 
 
-
 def main(args_list):
     a = parse_args(args_list)
     # Special exception for imgbb.
@@ -152,12 +154,8 @@ def main(args_list):
     print(f"\nGrepping for \"{a.old_domain}\" in {src_pages_dir} to update in {dest_pages_dir}\n")
     img_link_finder = MDImgLinkFinder(a.old_domain)
     # Detect local host/private network and disable secure certification.
-    if a.old_domain.startswith("https://"):
-        octets = a.old_domain[8:].split(".")
-        if a.old_domain.startswith("https://localhost") or \
-            octets[0] in ["172", "127"] or a.old_domain.startswith(
-            "https://192.168."):
-            ssl._create_default_https_context = ssl._create_unverified_context
+    if a.insecure:
+        ssl._create_default_https_context = ssl._create_unverified_context
 
     for md_file in pathlib.Path(src_pages_dir).rglob('*.md'):
         if a.verbosity > 1:

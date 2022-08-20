@@ -1,3 +1,4 @@
+import ssl
 from argparse import Namespace
 import pathlib
 from unittest.mock import patch, sentinel, Mock, mock_open, call
@@ -135,6 +136,7 @@ STOCK_ARGS = {
     "destination_subdir": "relinked_pages",
     "config_json": None,
     "verbosity": 0,
+    "insecure": False,
 }
 
 
@@ -185,6 +187,37 @@ def test_main(
         call("https://mysite.co.uk/wp-content/uploads/giblets-bacon.webp", img_op_dir, True),
         call("https://mysite.co.uk/wp-content/uploads/variety-effigies-400x241.webp", img_op_dir, True),
     ])
+
+
+@patch("converted_md_corrector.ssl._create_unverified_context", autospec=True)
+@patch("converted_md_corrector.check_if_scaled_and_dl", autospec=True)
+@patch("converted_md_corrector.pathlib.Path", autospec=True)
+@patch("converted_md_corrector.get_path_to_pages", side_effect=lambda x: x)
+@patch("converted_md_corrector.parse_args", return_value=Namespace(
+    **(STOCK_ARGS | {"old_domain": "https://mysite.co.uk/wp-content/uploads/",
+                     "verbosity": 2, "insecure": True})))
+def test_main_insecure(
+        mock_parse_args,
+        mock_get_path_to_pages,
+        mock_path,
+        mock_check_if_scaled_and_dl,
+        mock_mk_unverified_context,
+        sample_md):
+    margs = mock_parse_args.return_value
+    path_obj = get_path_obj_for_main(mock_path.return_value, margs)
+    output_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir])
+    img_op_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir, margs.new_domain])
+    with patch("builtins.open", mock_open(read_data=sample_md)) as mocked_open:
+        main(["https://mysite.co.uk/wp-content/uploads/"])
+    expected_md = sample_md.replace("](https://mysite.co.uk/wp-content/uploads/", "](images/")
+    assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md, output_dir)
+    mock_get_path_to_pages.assert_called_once_with(margs.markdown_source_dir)
+    mock_check_if_scaled_and_dl.assert_has_calls([
+        call("https://mysite.co.uk/wp-content/uploads/210923-24_status.alerting.webp", img_op_dir, True),
+        call("https://mysite.co.uk/wp-content/uploads/giblets-bacon.webp", img_op_dir, True),
+        call("https://mysite.co.uk/wp-content/uploads/variety-effigies-400x241.webp", img_op_dir, True),
+    ])
+    assert ssl._create_default_https_context == mock_mk_unverified_context
 
 
 @patch("converted_md_corrector.check_if_scaled_and_dl", autospec=True)
