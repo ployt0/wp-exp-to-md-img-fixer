@@ -6,7 +6,6 @@ one per post. Assuming the former, this script relinks (fixes) the output from
 lonekorean's.
 """
 import ssl
-from argparse import ArgumentError
 import sys
 import pathlib
 import os
@@ -14,7 +13,6 @@ import re
 import argparse
 import urllib.request
 from typing import Optional
-from urllib.parse import urlparse
 import json
 
 OUTPUT_COLS = 80
@@ -54,7 +52,7 @@ class MDImgLinkFinder:
             print(f"{md_file}@{start_i}:")
             MDImgLinkFinder.print_img_link(self.text, self.i)
             self.i += 2
-        # To avoid inf-loop, we progressed forward or fail:
+            # To avoid inf-loop, we progressed forward or fail:
         else:
             self.i = -1
 
@@ -113,7 +111,7 @@ def parse_args(args_list):
     return args
 
 
-def get_path_to_pages(pages_dir_path):
+def get_path_to_pages(pages_dir_path: str) -> str:
     """
     Iterates from the root of the dir path provided until we find a the
     remaining path to be a valid directory in the current working directory.
@@ -163,7 +161,7 @@ def check_if_scaled_and_dl(img_url: str, dest_imgs_dir: str, keep_resizes) ->\
 
 def main(args_list):
     a = parse_args(args_list)
-    # Special exception for imgbb.
+    # Special exception for imgbb:
     if a.old_domain.startswith("http") and not a.old_domain.startswith("https://i.ibb.co"):
         a.old_domain = ensure_wp_uploads_in(a.old_domain)
         a.old_domain = remove_trailing_slash(a.old_domain)
@@ -176,8 +174,8 @@ def main(args_list):
     pathlib.Path(dest_imgs_dir).mkdir(exist_ok=True)
     print(f"\nGrepping for \"{a.old_domain}\" in {src_pages_dir} to update in {dest_pages_dir}\n")
     img_link_finder = MDImgLinkFinder(a.old_domain)
-    # Detect local host/private network and disable secure certification.
     if a.insecure:
+        # Disable certificate verification.
         ssl._create_default_https_context = ssl._create_unverified_context
 
     for md_file in pathlib.Path(src_pages_dir).rglob('*.md'):
