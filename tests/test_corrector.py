@@ -129,58 +129,28 @@ def test_check_if_scaled_and_dl_paramd(mock_urlretrieve, img_url, keep_resizes, 
     ])
 
 
-STOCK_ARGS = {
-    "old_domain": "http://a/b/c",
-    "new_domain": "images/",
-    "markdown_source_dir": "app/pages",
-    "destination_subdir": "relinked_pages",
-    "config_json": None,
-    "verbosity": 0,
-    "insecure": False,
-}
-
-
-def get_path_obj_for_main(value, margs):
-    path_obj = value
-    path_obj.rglob = Mock(autospec=True, return_value=[pathlib.Path(margs.markdown_source_dir + "/file1.md")])
-    return path_obj
-    # path_obj.rglob.return_value[0].name = path_obj.rglob.return_value[0].name
-
-
-def assert_main_file_io(mocked_open, mrglob_rv, expected_md, output_dir):
-    expected_calls = [
-        call(mrglob_rv[0], "r", encoding="utf-8"),
-        call().__enter__(),
-        call().read(),
-        call().__exit__(None, None, None),
-        call(os.path.join(output_dir, mrglob_rv[0].name), "w", encoding="utf-8"),
-        call().__enter__(),
-        call().write(expected_md),
-        call().__exit__(None, None, None),
-    ]
-    for i in range(len(expected_calls)):
-        assert mocked_open.mock_calls[i] == expected_calls[i]
-
-
 @patch("converted_md_corrector.check_if_scaled_and_dl", autospec=True)
 @patch("converted_md_corrector.pathlib.Path", autospec=True)
 @patch("converted_md_corrector.get_path_to_pages", side_effect=lambda x: x)
-@patch("converted_md_corrector.parse_args", return_value=Namespace(
-    **(STOCK_ARGS | {"old_domain": "https://mysite.co.uk/wp-content/uploads/", "verbosity": 2})))
+@patch("converted_md_corrector.parse_args", autospec=True)
 def test_main(
         mock_parse_args,
         mock_get_path_to_pages,
         mock_path,
         mock_check_if_scaled_and_dl,
-        sample_md):
+        sample_md, stock_args, helpers):
+    mock_parse_args.return_value = Namespace(**(stock_args | {
+        "old_domain": "https://mysite.co.uk/wp-content/uploads/",
+        "verbosity": 2
+    }))
     margs = mock_parse_args.return_value
-    path_obj = get_path_obj_for_main(mock_path.return_value, margs)
+    path_obj = helpers.get_path_obj_for_main(mock_path.return_value, margs)
     output_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir])
     img_op_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir, margs.new_domain])
     with patch("builtins.open", mock_open(read_data=sample_md)) as mocked_open:
         main(["https://mysite.co.uk/wp-content/uploads/"])
     expected_md = sample_md.replace("](https://mysite.co.uk/wp-content/uploads/", "](images/")
-    assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md, output_dir)
+    helpers.assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md, output_dir)
     mock_get_path_to_pages.assert_called_once_with(margs.markdown_source_dir)
     mock_check_if_scaled_and_dl.assert_has_calls([
         call("https://mysite.co.uk/wp-content/uploads/210923-24_status.alerting.webp", img_op_dir, True),
@@ -193,24 +163,27 @@ def test_main(
 @patch("converted_md_corrector.check_if_scaled_and_dl", autospec=True)
 @patch("converted_md_corrector.pathlib.Path", autospec=True)
 @patch("converted_md_corrector.get_path_to_pages", side_effect=lambda x: x)
-@patch("converted_md_corrector.parse_args", return_value=Namespace(
-    **(STOCK_ARGS | {"old_domain": "https://mysite.co.uk/wp-content/uploads/",
-                     "verbosity": 2, "insecure": True})))
+@patch("converted_md_corrector.parse_args", autospec=True)
 def test_main_insecure(
         mock_parse_args,
         mock_get_path_to_pages,
         mock_path,
         mock_check_if_scaled_and_dl,
         mock_mk_unverified_context,
-        sample_md):
+        sample_md, stock_args, helpers):
+    mock_parse_args.return_value = Namespace(**(stock_args | {
+        "old_domain": "https://mysite.co.uk/wp-content/uploads/",
+        "verbosity": 2,
+        "insecure": True
+    }))
     margs = mock_parse_args.return_value
-    path_obj = get_path_obj_for_main(mock_path.return_value, margs)
+    path_obj = helpers.get_path_obj_for_main(mock_path.return_value, margs)
     output_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir])
     img_op_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir, margs.new_domain])
     with patch("builtins.open", mock_open(read_data=sample_md)) as mocked_open:
         main(["https://mysite.co.uk/wp-content/uploads/"])
     expected_md = sample_md.replace("](https://mysite.co.uk/wp-content/uploads/", "](images/")
-    assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md, output_dir)
+    helpers.assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md, output_dir)
     mock_get_path_to_pages.assert_called_once_with(margs.markdown_source_dir)
     mock_check_if_scaled_and_dl.assert_has_calls([
         call("https://mysite.co.uk/wp-content/uploads/210923-24_status.alerting.webp", img_op_dir, True),
@@ -223,21 +196,23 @@ def test_main_insecure(
 @patch("converted_md_corrector.check_if_scaled_and_dl", autospec=True)
 @patch("converted_md_corrector.pathlib.Path", autospec=True)
 @patch("converted_md_corrector.get_path_to_pages", side_effect=lambda x: x)
-@patch("converted_md_corrector.parse_args", return_value=Namespace(
-    **(STOCK_ARGS | {"old_domain": "https://mysite.co.uk/wp-content/uploads/"})))
+@patch("converted_md_corrector.parse_args", autospec=True)
 def test_main_harder(
         mock_parse_args,
         mock_get_path_to_pages,
         mock_path,
         mock_check_if_scaled_and_dl,
-        sample_md_2, expected_md_2):
+        sample_md_2, expected_md_2, stock_args, helpers):
+    mock_parse_args.return_value = Namespace(**(stock_args | {
+        "old_domain": "https://mysite.co.uk/wp-content/uploads/",
+    }))
     margs = mock_parse_args.return_value
-    path_obj = get_path_obj_for_main(mock_path.return_value, margs)
+    path_obj = helpers.get_path_obj_for_main(mock_path.return_value, margs)
     output_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir])
     img_op_dir = "/".join(margs.markdown_source_dir.split("/")[:-1] + [margs.destination_subdir, margs.new_domain])
     with patch("builtins.open", mock_open(read_data=sample_md_2)) as mocked_open:
         main(["https://mysite.co.uk/wp-content/uploads/"])
-    assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md_2, output_dir)
+    helpers.assert_main_file_io(mocked_open, path_obj.rglob.return_value, expected_md_2, output_dir)
     mock_get_path_to_pages.assert_called_once_with(margs.markdown_source_dir)
     mock_check_if_scaled_and_dl.assert_has_calls([
         call("https://mysite.co.uk/wp-content/uploads/210923-24_status.alerting.webp", img_op_dir, True),

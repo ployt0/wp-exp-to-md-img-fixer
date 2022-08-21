@@ -111,9 +111,7 @@ Lorem ipsum dolor sit amet.:
 [this might be a closing link](#link1)"""
     img_link_finder.text = atypical_md
     img_link_finder.simple_detection("print_me")
-    # it has to progress, so we don't infinite loop:
-    assert img_link_finder.i == 62
-    img_link_finder.simple_detection("print_me")
+    # it has to progress, (or detect EOF) so we don't infinite loop:
     assert img_link_finder.i == -1
 
 
@@ -135,11 +133,11 @@ Lorem ipsum dolor sit amet.:
     mock_print_img_link.assert_called_once_with(atypical_md, 60)
 
     # Assert nothing was output but we still scanned the non-matching image at
-    # the end.
+    # the end and set the EOF as i==-1.
     img_link_finder.simple_detection("print_me")
     mock_print.assert_called_once_with("print_me@31:")
     mock_print_img_link.assert_called_once_with(atypical_md, 60)
-    assert img_link_finder.i == 94
+    assert img_link_finder.i == -1
 
 
 @patch('builtins.print')

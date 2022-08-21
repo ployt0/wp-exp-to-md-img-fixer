@@ -1,4 +1,9 @@
 import pytest
+import pathlib
+from unittest.mock import patch, sentinel, Mock, mock_open, call
+import os
+
+
 
 
 @pytest.fixture
@@ -68,3 +73,44 @@ Praesent congue massa pretium augue condimentum lacinia.
 
 Etiam sed tristique nulla.
 """
+
+
+@pytest.fixture
+def stock_args():
+    return {
+        "old_domain": "http://a/b/c",
+        "new_domain": "images/",
+        "markdown_source_dir": "app/pages",
+        "destination_subdir": "relinked_pages",
+        "config_json": None,
+        "verbosity": 0,
+        "insecure": False,
+    }
+
+
+class Helpers:
+    @staticmethod
+    def get_path_obj_for_main(path_obj, margs):
+        path_obj.rglob = Mock(autospec=True, return_value=[
+            pathlib.Path(margs.markdown_source_dir + "/file1.md")])
+        return path_obj
+
+    @staticmethod
+    def assert_main_file_io(mocked_open, mrglob_rv, expected_md, output_dir):
+        expected_calls = [
+            call(mrglob_rv[0], "r", encoding="utf-8"),
+            call().__enter__(),
+            call().read(),
+            call().__exit__(None, None, None),
+            call(os.path.join(output_dir, mrglob_rv[0].name), "w",
+                 encoding="utf-8"),
+            call().__enter__(),
+            call().write(expected_md),
+            call().__exit__(None, None, None),
+        ]
+        assert mocked_open.mock_calls == expected_calls
+
+
+@pytest.fixture
+def helpers():
+    return Helpers

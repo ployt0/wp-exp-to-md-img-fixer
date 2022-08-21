@@ -53,8 +53,10 @@ class MDImgLinkFinder:
             start_i = self.text.rfind("![", 0, self.i)
             print(f"{md_file}@{start_i}:")
             MDImgLinkFinder.print_img_link(self.text, self.i)
-        # it has to progress, so we don't infinite loop:
-        self.i += 2
+            self.i += 2
+        # To avoid inf-loop, we progressed forward or fail:
+        else:
+            self.i = -1
 
 
 def ensure_wp_uploads_in(former_path):
@@ -208,7 +210,5 @@ def main(args_list):
                 print(f"Saved modified {md_file.name} to {os.path.join(dest_pages_dir, md_file.name)}")
 
 
-
-# For pycharm debugging, only
 if __name__ == "__main__":
     main(sys.argv[1:])
