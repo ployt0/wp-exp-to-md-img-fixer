@@ -111,7 +111,35 @@ Lorem ipsum dolor sit amet.:
 [this might be a closing link](#link1)"""
     img_link_finder.text = atypical_md
     img_link_finder.simple_detection("print_me")
-    assert img_link_finder.i == 0
+    # it has to progress, so we don't infinite loop:
+    assert img_link_finder.i == 62
+    img_link_finder.simple_detection("print_me")
+    assert img_link_finder.i == -1
+
+
+@patch('converted_md_corrector.MDImgLinkFinder.print_img_link')
+@patch('builtins.print')
+def test_simple_detection_infinite_loop_scenario(mock_print, mock_print_img_link):
+    img_link_finder = MDImgLinkFinder("diz")
+    atypical_md = """
+Lorem ipsum dolor sit amet.:
+
+![Maecenas at tincidunt nibh.](diz/alerting.webp)
+
+![Not this](dat/alerting.webp)"""
+    img_link_finder.text = atypical_md
+    img_link_finder.simple_detection("print_me")
+    mock_print.assert_called_once_with("print_me@31:")
+    # it has to progress, so we don't infinite loop:
+    assert img_link_finder.i == 62
+    mock_print_img_link.assert_called_once_with(atypical_md, 60)
+
+    # Assert nothing was output but we still scanned the non-matching image at
+    # the end.
+    img_link_finder.simple_detection("print_me")
+    mock_print.assert_called_once_with("print_me@31:")
+    mock_print_img_link.assert_called_once_with(atypical_md, 60)
+    assert img_link_finder.i == 94
 
 
 @patch('builtins.print')

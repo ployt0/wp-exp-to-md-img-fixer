@@ -43,18 +43,18 @@ class MDImgLinkFinder:
         # I don't know about you, but I sometimes line break after "](".
         # That would limit the applicability of this script to just the output
         # from the export to md conversion.
-        pot_i = self.text.find("](", self.i)
-        if pot_i == -1:
-            self.i = pot_i
+        self.i = self.text.find("](", self.i)
+        if self.i == -1:
             return
-        i0 = pot_i + 2
-        i1 = pot_i + 2 + len(self.former_path)
+        i0 = self.i + 2
+        i1 = self.i + 2 + len(self.former_path)
         if self.text[i0:i1] == self.former_path or \
                 self.text[i0:i1 + 1] == "\n" + self.former_path:
-            start_i = self.text.rfind("![", 0, pot_i)
+            start_i = self.text.rfind("![", 0, self.i)
             print(f"{md_file}@{start_i}:")
-            MDImgLinkFinder.print_img_link(self.text, pot_i)
-            self.i = pot_i + 2
+            MDImgLinkFinder.print_img_link(self.text, self.i)
+        # it has to progress, so we don't infinite loop:
+        self.i += 2
 
 
 def ensure_wp_uploads_in(former_path):
