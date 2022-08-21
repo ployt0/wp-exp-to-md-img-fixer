@@ -40,12 +40,21 @@ class MDImgLinkFinder:
         return self.text[self.i:end_i]
 
     def simple_detection(self, md_file) -> None:
-        self.i = self.text.find("](" + self.former_path, self.i)
-        if self.i > -1:
-            start_i = self.text.rfind("![", 0, self.i)
+        # I don't know about you, but I sometimes line break after "](".
+        # That would limit the applicability of this script to just the output
+        # from the export to md conversion.
+        pot_i = self.text.find("](", self.i)
+        if pot_i == -1:
+            self.i = pot_i
+            return
+        i0 = pot_i + 2
+        i1 = pot_i + 2 + len(self.former_path)
+        if self.text[i0:i1] == self.former_path or \
+                self.text[i0:i1 + 1] == "\n" + self.former_path:
+            start_i = self.text.rfind("![", 0, pot_i)
             print(f"{md_file}@{start_i}:")
-            MDImgLinkFinder.print_img_link(self.text, self.i)
-            self.i += 2
+            MDImgLinkFinder.print_img_link(self.text, pot_i)
+            self.i = pot_i + 2
 
 
 def ensure_wp_uploads_in(former_path):

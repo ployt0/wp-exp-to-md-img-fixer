@@ -51,12 +51,15 @@ jobs:
 
     - name: Real world use of public image server.
       run: |
-        # We start with neither images nor relinked_pages:
+        echo nothing here:
         ls -la tests/si-tests/
         python wp-exp-to-md-img-fixer/converted_md_corrector.py -v -s -m tests/si-tests/pages https://i.ibb.co
-        # Now we have them:
+        echo Now we have relinked_pages/images/...:
+        ls -la tests/si-tests/
         ls -la tests/si-tests/relinked_pages
         ls -la tests/si-tests/relinked_pages/images
+
+
 
 
     - name: Spin up DB container

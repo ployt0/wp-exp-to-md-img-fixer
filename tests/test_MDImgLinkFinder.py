@@ -61,6 +61,59 @@ def test_simple_detection_using_just_domain(mock_print, mock_print_img_link, sam
     mock_print_img_link.assert_called_once_with(sample_md, img_link_finder.i - 2)
 
 
+@patch('converted_md_corrector.MDImgLinkFinder.print_img_link')
+@patch('builtins.print')
+def test_simple_detection_relinking_old_folder(mock_print, mock_print_img_link):
+    img_link_finder = MDImgLinkFinder("relpath_to_imgs")
+    locally_linked_md = """
+Lorem ipsum dolor sit amet.:
+
+![Maecenas at tincidunt nibh.](relpath_to_imgs/210923-24_status.alerting.webp)
+
+Fusce condimentum odio quis molestie mattis.
+    """
+
+    img_link_finder.text = locally_linked_md
+    img_link_finder.simple_detection("print_me")
+    assert img_link_finder.i == 62
+    assert locally_linked_md.find(img_link_finder.former_path) == 62
+    mock_print.assert_called_once_with("print_me@31:")
+    mock_print_img_link.assert_called_once_with(locally_linked_md, img_link_finder.i - 2)
+
+
+@patch('converted_md_corrector.MDImgLinkFinder.print_img_link')
+@patch('builtins.print')
+def test_simple_detection_atypical_img_md(mock_print, mock_print_img_link):
+    img_link_finder = MDImgLinkFinder("relpath_to_imgs")
+    # I sometimes do this to reduce my column count, I find most interpreters
+    # accept it:
+    atypical_md = """
+Lorem ipsum dolor sit amet.:
+
+![Maecenas at tincidunt nibh.](
+relpath_to_imgs/210923-24_status.alerting.webp)
+
+Fusce condimentum odio quis molestie mattis.
+    """
+    img_link_finder.text = atypical_md
+    img_link_finder.simple_detection("print_me")
+    assert img_link_finder.i == 62
+    assert atypical_md.find(img_link_finder.former_path) == 63
+    mock_print.assert_called_once_with("print_me@31:")
+    mock_print_img_link.assert_called_once_with(atypical_md, img_link_finder.i - 2)
+
+
+def test_simple_detection_lookahead_of_redherring():
+    img_link_finder = MDImgLinkFinder("something_long_enough_to_overflow")
+    atypical_md = """
+Lorem ipsum dolor sit amet.:
+
+[this might be a closing link](#link1)"""
+    img_link_finder.text = atypical_md
+    img_link_finder.simple_detection("print_me")
+    assert img_link_finder.i == 0
+
+
 @patch('builtins.print')
 def test_print_img_link(mock_print, sample_md):
     MDImgLinkFinder.print_img_link(sample_md, 89)
